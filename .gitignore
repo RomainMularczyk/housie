@@ -1,7 +1,20 @@
+# Secrets
 .env
+
+# Dependencies
 node_modules
+
+# Temp
 tmp
+
+# Scrapers
 downloads
+
+# Misc
 .DS_Store
+
+# Builds
 dist
+
+# Caches
 cache.json
