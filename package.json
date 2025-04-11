@@ -1,0 +1,33 @@
+{
+  "name": "housie",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "tsx index.ts",
+    "dev": "tsx watch src/app.ts",
+    "postinstall": "playwright install"
+  },
+  "dependencies": {
+    "@browserbasehq/sdk": "2.5.0",
+    "@browserbasehq/stagehand": "2.0.0",
+    "@hono/node-server": "^1.14.1",
+    "@libsql/client": "^0.15.3",
+    "@playwright/test": "^1.49.1",
+    "boxen": "^8.0.1",
+    "chalk": "^5.3.0",
+    "dotenv": "^16.5.0",
+    "grammy": "^1.35.1",
+    "hono": "^4.7.6",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.24.0",
+    "@types/node": "^22.14.0",
+    "eslint": "^9.24.0",
+    "globals": "^16.0.0",
+    "prettier": "3.5.3",
+    "tsx": "^4.19.2",
+    "typescript": "^5.0.0",
+    "typescript-eslint": "^8.29.1"
+  }
+}
