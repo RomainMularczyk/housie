@@ -21,7 +21,7 @@ abstract class BaseError<T extends string> extends Error {
 
   constructor(name: T, message?: string, error?: unknown, status?: number) {
     if (!message) {
-      const message = "An unknown error occurred.";
+      const message = 'An unknown error occurred.';
       super(message);
       this.message = message;
     } else {
@@ -32,7 +32,7 @@ abstract class BaseError<T extends string> extends Error {
       this.details = error.message;
       this.error = error;
     } else {
-      this.details = "";
+      this.details = '';
     }
     if (status) {
       this.status = status;

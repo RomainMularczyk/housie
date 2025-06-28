@@ -1,55 +1,190 @@
-import turso from '../database/database';
-import { DatabaseError } from '../errors/DatabaseError';
-import { House } from '../types/House';
-import { SelectHouseSchema } from '../validators/House';
+import { InValue, ResultSet } from '@libsql/client';
+import { v4 as uuidv4 } from 'uuid';
+import { Connect } from '@/utils/connection/Connect.js';
+import { DatabaseError } from '@/errors/DatabaseError.js';
+import { House, HouseDatabase } from '@/types/House.js';
+import { SelectHouseSchema } from '@/types/validators/House.js';
+import { LogDomain, logger } from '@/utils/logger.js';
+
+const turso = Connect.toTursoDatabase();
 
 class HouseRepository {
-  public static async create(house: House): Promise<House> {
+  /**
+   * Save a house in the database.
+   *
+   * @param {Omit<HouseDatabase, 'id'>} house - The house to be saved.
+   * @returns {Promise<House>} A promise containing the saved house.
+   * @throws {DatabaseError} When an error occurred with the database.
+   */
+  public static async create(house: Omit<HouseDatabase, 'id'>): Promise<House> {
+    let response: ResultSet;
+    const uuid = uuidv4();
+    const query = {
+      sql: 'INSERT INTO house'
+        + ' (id, name, description, price, size, rooms, dpe, url, city, postCode,'
+        + ' isArchived, isFavorite, isUserPicked, isHousiaPicked)'
+        + ' VALUES (:id, :name, :description, :price, :size, :rooms,'
+        + ' :dpe, :url, :city, :postCode, :isArchived, :isFavorite, :isUserPicked,'
+        + ' :isHousiaPicked) RETURNING *;',
+      args: { id: uuid, ...house },
+    };
     try {
-      const query = {
-        sql: 'INSERT INTO house '
-          + '(name, description, price, size, rooms, dpe, address, url) '
-          + ' VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        args: Object.values(house),
-      };
-      const response = await turso.execute(query);
-      const result = SelectHouseSchema.parse(response.rows[0]);
-      return result;
+      response = await turso.execute(query);
     } catch (err) {
-      throw new DatabaseError('Unknown Error', undefined, err);
+      // @ts-expect-error code is contained on turso errors
+      if (err.code === 'SQLITE_CONSTRAINT') {
+        throw new DatabaseError(
+          'Unique Constraint Error',
+          'The house already exists in the database.',
+          err,
+        );
+      } else {
+        throw new DatabaseError('Unknown Error', undefined, err);
+      }
     }
+    if (response.rows.length === 0) {
+      throw new DatabaseError('No Result Error', undefined);
+    }
+    const result = SelectHouseSchema.parse(response.rows[0]);
+    return result;
   }
 
-  public static async read(id?: number): Promise<House | House[]> {
+  /**
+  * Read a house or all houses from the database.
+  *
+  * @param {string | undefined} id - The house unique identifier.
+  * @returns {Promise<House | House[]>} A promise containing the house
+  * selected (if a unique identifier was provided as a parameter). Otherwise,
+  * returns a promise containing the list of all houses.
+  * @throws {DatabaseError} When an error occurred with the database.
+  */
+  public static async read(id?: string): Promise<House | House[]> {
+    let response: ResultSet;
     if (id) {
       const query = {
-        sql: 'SELECT * FROM house WHERE (?);',
+        sql: 'SELECT * FROM house WHERE id = ?;',
         args: [id],
       };
-      const response = await turso.execute(query);
-      const result = SelectHouseSchema.parse(response.rows[0]);
-      return result;
+      try {
+        response = await turso.execute(query);
+      } catch (err) {
+        throw new DatabaseError('Unknown Error', undefined, err);
+      }
     } else {
       const query = {
         sql: 'SELECT * FROM house;',
       };
-      const response = await turso.execute(query);
-      const result = response.rows.map((r) => SelectHouseSchema.parse(r));
-      return result;
+      try {
+        response = await turso.execute(query);
+      } catch (err) {
+        throw new DatabaseError('Unknown Error', undefined, err);
+      }
+    }
+    if (response.rows.length === 0) {
+      throw new DatabaseError('No Result Error', undefined);
+    } else {
+      if (id) {
+        const result = SelectHouseSchema.parse(response.rows[0]);
+        return result;
+      } else {
+        const result = response.rows.map((r) => SelectHouseSchema.parse(r));
+        return result;
+      }
     }
   }
 
-  public static async delete(id: number): Promise<boolean> {
+  /**
+  * Update a given house in the database.
+  *
+  * @param {string} id - The house unique identifier.
+  * @param {Partial<HouseDatabase>} changes - The changes to apply on the house.
+  * @returns {Promise<House>} A promise containing the updated house.
+  * @throws {DatabaseError} When an error occurred with the database.
+  */
+  public static async update(
+    id: string,
+    changes: Partial<HouseDatabase>,
+  ): Promise<House> {
+    let response: ResultSet;
+    const keys = Object.keys(changes) as Array<keyof HouseDatabase>;
+
+    if (keys.length === 0) {
+      throw new DatabaseError('Data Format Error', 'No changes were provided.');
+    }
+
+    const setClause = keys.map((key) => `${key} = ?`).join(', ');
+    const values = keys.map((key) => changes[key]) as InValue[];
+
     const query = {
-      sql: 'DELETE FROM house WHERE (?);',
+      sql: `UPDATE house SET ${setClause} WHERE id = ? RETURNING *;`,
+      args: [...values, id],
+    };
+    try {
+      response = await turso.execute(query);
+    } catch (err) {
+      throw new DatabaseError('Unknown Error', undefined, err);
+    }
+    if (response.rows.length === 0) {
+      throw new DatabaseError('No Result Error', undefined);
+    }
+    const result = SelectHouseSchema.parse(response.rows[0]);
+    return result;
+  }
+
+  /**
+  * Delete a given house in the database.
+  *
+  * @param {string} id - The house unique identifier.
+  * @returns {Promise<true>} Return `true` if the house was deleted
+  * successfully.
+  * @throws {DatabaseError} When an error occurred with the database.
+  */
+  public static async delete(id: string): Promise<true> {
+    let response: ResultSet;
+    const query = {
+      sql: 'DELETE FROM house WHERE id = ?;',
       args: [id],
     };
     try {
-      const response = await turso.execute(query);
-      return response.rows;
+      response = await turso.execute(query);
     } catch (err) {
-      return false;
+      throw new DatabaseError('Unknown Error', undefined, err);
     }
+    if (response.rowsAffected === 0) {
+      throw new DatabaseError('No Result Error', undefined);
+    }
+    return true;
+  }
+
+  /**
+   * Find a house by a given key and search query.
+   *
+   * @param {{ key: string, searchQuery: string }} params - The key and 
+   * search query to use.
+   * @returns {Promise<House>} A promise containing the found house.
+   * @throws {DatabaseError} When an error occurred with the database.
+   */
+  public static async findOneBy(
+    { key, searchQuery }: { key: string, searchQuery: string }
+  ): Promise<House> {
+    let response: ResultSet;
+    const query = {
+      sql: `SELECT * FROM house WHERE ${key} = ?;`,
+      args: [searchQuery],
+    };
+    logger.info([LogDomain.DATABASE], 'Finding house', { key, searchQuery });
+    try {
+      response = await turso.execute(query);
+    } catch (err) {
+      logger.error([LogDomain.DATABASE], 'Error finding house', { err });
+      throw new DatabaseError('Unknown Error', undefined, err);
+    }
+    if (response.rows.length === 0) {
+      logger.warn([LogDomain.DATABASE], 'No house found', { key, searchQuery });
+      throw new DatabaseError('No Result Error', undefined);
+    }
+    const result = SelectHouseSchema.parse(response.rows[0]);
+    return result;
   }
 }
 

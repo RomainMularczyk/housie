@@ -1,14 +1,14 @@
-import { BaseError } from './Error';
+import { BaseError } from './Error.js';
 
 type DatabaseTypeError =
-  | "Connection Error"
-  | "No Result Error"
-  | "Too Many Results Error"
-  | "Data Format Error"
-  | "Unknown Error"
-  | "No Primary Key Error"
-  | "Unique Constraint Error"
-  | "Primary Key Constraint Error";
+  | 'Connection Error'
+  | 'No Result Error'
+  | 'Too Many Results Error'
+  | 'Data Format Error'
+  | 'Unknown Error'
+  | 'No Primary Key Error'
+  | 'Unique Constraint Error'
+  | 'Primary Key Constraint Error';
 
 /**
  * Type d'erreur levé lorsque la base de données ne répond pas
@@ -22,7 +22,12 @@ type DatabaseTypeError =
  * l'erreur.
  */
 class DatabaseError extends BaseError<DatabaseTypeError> {
-  constructor(name: DatabaseTypeError, message?: string, error?: unknown, status?: number) {
+  constructor(
+    name: DatabaseTypeError,
+    message?: string,
+    error?: unknown,
+    status?: number,
+  ) {
     if (!message) {
       const message = `A ${name} occurred with the database.`;
       super(name, message, error, status);

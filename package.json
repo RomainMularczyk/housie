@@ -2,9 +2,10 @@
   "name": "housie",
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && tsc-alias",
     "start": "tsx index.ts",
-    "dev": "tsx watch src/app.ts",
+    "dev": "NODE_ENV=development tsx watch src/dev-entry.ts",
+    "test:queue": "tsx src/tests/queue-test.ts",
     "postinstall": "playwright install"
   },
   "dependencies": {
@@ -12,22 +13,35 @@
     "@browserbasehq/stagehand": "2.0.0",
     "@hono/node-server": "^1.14.1",
     "@libsql/client": "^0.15.3",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.59.0",
+    "@opentelemetry/sdk-metrics": "^2.0.1",
+    "@opentelemetry/sdk-node": "^0.201.0",
+    "@opentelemetry/sdk-trace-node": "^2.0.1",
     "@playwright/test": "^1.49.1",
+    "amqplib": "^0.10.8",
     "boxen": "^8.0.1",
     "chalk": "^5.3.0",
     "dotenv": "^16.5.0",
     "grammy": "^1.35.1",
     "hono": "^4.7.6",
+    "redis": "^5.5.6",
+    "uuid": "^11.1.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.24.0",
+    "@types/amqplib": "^0.10.7",
     "@types/node": "^22.14.0",
     "eslint": "^9.24.0",
     "globals": "^16.0.0",
     "prettier": "3.5.3",
+    "tsc-alias": "^1.8.15",
     "tsx": "^4.19.2",
     "typescript": "^5.0.0",
     "typescript-eslint": "^8.29.1"
+  },
+  "_moduleAliases": {
+    "@": "dist"
   }
 }

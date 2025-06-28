@@ -11,24 +11,24 @@
  * une opération réalisée avec succès.
  */
 const success = <T>(status: number = 200, data: T, message?: string): Response => {
-    if (message) {
-        return new Response(
-            JSON.stringify({
-                status: "success",
-                message: message,
-                data: data,
-            }),
-            { headers: { "Content-Type": "application/json" }, status: status },
-        );
-    } else {
-        return new Response(
-            JSON.stringify({
-                status: "success",
-                data: data,
-            }),
-            { headers: { "Content-Type": "application/json" }, status: status },
-        );
-    }
+  if (message) {
+    return new Response(
+      JSON.stringify({
+        status: 'success',
+        message: message,
+        data: data,
+      }),
+      { headers: { 'Content-Type': 'application/json' }, status: status },
+    );
+  } else {
+    return new Response(
+      JSON.stringify({
+        status: 'success',
+        data: data,
+      }),
+      { headers: { 'Content-Type': 'application/json' }, status: status },
+    );
+  }
 };
 
 export { success };

@@ -1,7 +1,5 @@
-import type { ConstructorParams } from "@browserbasehq/stagehand";
-import dotenv from "dotenv";
-false;
-false;
+import type { ConstructorParams } from '@browserbasehq/stagehand';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
@@ -10,32 +8,36 @@ const StagehandConfig: ConstructorParams = {
   domSettleTimeoutMs: 30_000 /* Timeout for DOM to settle in milliseconds */,
 
   // LLM configuration
-  modelName: "gpt-4o" /* Name of the model to use */,
+  modelName: 'gpt-4o' /* Name of the model to use */,
   modelClientOptions: {
     apiKey: process.env.OPENAI_API_KEY,
   } /* Configuration options for the model client */,
 
   // Browser configuration
-  env: "LOCAL" /* Environment to run in: LOCAL or BROWSERBASE */,
+  env: 'LOCAL' /* Environment to run in: LOCAL or BROWSERBASE */,
   apiKey: process.env.BROWSERBASE_API_KEY /* API key for authentication */,
   projectId: process.env.BROWSERBASE_PROJECT_ID /* Project identifier */,
-  browserbaseSessionID:
-    undefined /* Session ID for resuming Browserbase sessions */,
+  browserbaseSessionID: undefined /* Session ID for resuming Browserbase sessions */,
   browserbaseSessionCreateParams: {
     projectId: process.env.BROWSERBASE_PROJECT_ID!,
     browserSettings: {
       blockAds: true,
       viewport: {
-        width: 1024,
-        height: 768,
+        width: 1280,
+        height: 1024,
       },
     },
   },
   localBrowserLaunchOptions: {
     viewport: {
-      width: 1024,
-      height: 768,
+      width: 1280,
+      height: 1024,
     },
+    headless: true,
+    extraHTTPHeaders: {
+      'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) '
+        + 'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36'
+    }
   } /* Configuration options for the local browser */,
 };
 
