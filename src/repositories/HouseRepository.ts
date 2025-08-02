@@ -9,6 +9,10 @@ import { LogDomain, logger } from '@/utils/logger.js';
 const turso = Connect.toTursoDatabase();
 
 class HouseRepository {
+  // --------------------------------------------
+  // -------------- GENERIC CRUD  --------------
+  // --------------------------------------------
+
   /**
    * Save a house in the database.
    *
@@ -20,12 +24,13 @@ class HouseRepository {
     let response: ResultSet;
     const uuid = uuidv4();
     const query = {
-      sql: 'INSERT INTO house'
-        + ' (id, name, description, price, size, rooms, dpe, url, city, postCode,'
-        + ' isArchived, isFavorite, isUserPicked, isHousiaPicked)'
-        + ' VALUES (:id, :name, :description, :price, :size, :rooms,'
-        + ' :dpe, :url, :city, :postCode, :isArchived, :isFavorite, :isUserPicked,'
-        + ' :isHousiaPicked) RETURNING *;',
+      sql:
+        'INSERT INTO house' +
+        ' (id, name, description, price, size, rooms, dpe, url, city, postCode,' +
+        ' isArchived, isFavorite, isUserPicked, isHousiaPicked)' +
+        ' VALUES (:id, :name, :description, :price, :size, :rooms,' +
+        ' :dpe, :url, :city, :postCode, :isArchived, :isFavorite, :isUserPicked,' +
+        ' :isHousiaPicked) RETURNING *;',
       args: { id: uuid, ...house },
     };
     try {
@@ -36,7 +41,7 @@ class HouseRepository {
         throw new DatabaseError(
           'Unique Constraint Error',
           'The house already exists in the database.',
-          err,
+          err
         );
       } else {
         throw new DatabaseError('Unknown Error', undefined, err);
@@ -50,60 +55,64 @@ class HouseRepository {
   }
 
   /**
-  * Read a house or all houses from the database.
-  *
-  * @param {string | undefined} id - The house unique identifier.
-  * @returns {Promise<House | House[]>} A promise containing the house
-  * selected (if a unique identifier was provided as a parameter). Otherwise,
-  * returns a promise containing the list of all houses.
-  * @throws {DatabaseError} When an error occurred with the database.
-  */
-  public static async read(id?: string): Promise<House | House[]> {
+   * Read a house in the database.
+   *
+   * @param {string} id - The house unique identifier.
+   * @returns {Promise<House>} A promise containing the house.
+   * @throws {DatabaseError} When an error occurred with the database.
+   */
+  public static async readOne(id: string): Promise<House> {
     let response: ResultSet;
-    if (id) {
-      const query = {
-        sql: 'SELECT * FROM house WHERE id = ?;',
-        args: [id],
-      };
-      try {
-        response = await turso.execute(query);
-      } catch (err) {
-        throw new DatabaseError('Unknown Error', undefined, err);
-      }
-    } else {
-      const query = {
-        sql: 'SELECT * FROM house;',
-      };
-      try {
-        response = await turso.execute(query);
-      } catch (err) {
-        throw new DatabaseError('Unknown Error', undefined, err);
-      }
+    const query = {
+      sql: 'SELECT * FROM house WHERE id = ?;',
+      args: [id],
+    };
+    try {
+      response = await turso.execute(query);
+    } catch (err) {
+      throw new DatabaseError('Unknown Error', undefined, err);
     }
     if (response.rows.length === 0) {
       throw new DatabaseError('No Result Error', undefined);
-    } else {
-      if (id) {
-        const result = SelectHouseSchema.parse(response.rows[0]);
-        return result;
-      } else {
-        const result = response.rows.map((r) => SelectHouseSchema.parse(r));
-        return result;
-      }
     }
+    const result = SelectHouseSchema.parse(response.rows[0]);
+    return result;
   }
 
   /**
-  * Update a given house in the database.
-  *
-  * @param {string} id - The house unique identifier.
-  * @param {Partial<HouseDatabase>} changes - The changes to apply on the house.
-  * @returns {Promise<House>} A promise containing the updated house.
-  * @throws {DatabaseError} When an error occurred with the database.
-  */
+   * Read all houses in the database.
+   *
+   * @returns {Promise<House[]>} A promise containing the list of all houses.
+   * @throws {DatabaseError} When an error occurred with the database.
+   */
+  public static async readAll(): Promise<House[] | []> {
+    let response: ResultSet;
+    const query = {
+      sql: 'SELECT * FROM house;',
+    };
+    try {
+      response = await turso.execute(query);
+    } catch (err) {
+      throw new DatabaseError('Unknown Error', undefined, err);
+    }
+    if (response.rows.length === 0) {
+      return [];
+    }
+    const result = response.rows.map((r) => SelectHouseSchema.parse(r));
+    return result;
+  }
+
+  /**
+   * Update a given house in the database.
+   *
+   * @param {string} id - The house unique identifier.
+   * @param {Partial<HouseDatabase>} changes - The changes to apply on the house.
+   * @returns {Promise<House>} A promise containing the updated house.
+   * @throws {DatabaseError} When an error occurred with the database.
+   */
   public static async update(
     id: string,
-    changes: Partial<HouseDatabase>,
+    changes: Partial<HouseDatabase>
   ): Promise<House> {
     let response: ResultSet;
     const keys = Object.keys(changes) as Array<keyof HouseDatabase>;
@@ -132,13 +141,13 @@ class HouseRepository {
   }
 
   /**
-  * Delete a given house in the database.
-  *
-  * @param {string} id - The house unique identifier.
-  * @returns {Promise<true>} Return `true` if the house was deleted
-  * successfully.
-  * @throws {DatabaseError} When an error occurred with the database.
-  */
+   * Delete a given house in the database.
+   *
+   * @param {string} id - The house unique identifier.
+   * @returns {Promise<true>} Return `true` if the house was deleted
+   * successfully.
+   * @throws {DatabaseError} When an error occurred with the database.
+   */
   public static async delete(id: string): Promise<true> {
     let response: ResultSet;
     const query = {
@@ -156,17 +165,25 @@ class HouseRepository {
     return true;
   }
 
+  // -------------------------------------
+  // -------------- CUSTOM  --------------
+  // -------------------------------------
+
   /**
    * Find a house by a given key and search query.
    *
-   * @param {{ key: string, searchQuery: string }} params - The key and 
+   * @param {{ key: string, searchQuery: string }} params - The key and
    * search query to use.
    * @returns {Promise<House>} A promise containing the found house.
    * @throws {DatabaseError} When an error occurred with the database.
    */
-  public static async findOneBy(
-    { key, searchQuery }: { key: string, searchQuery: string }
-  ): Promise<House> {
+  public static async findOneBy({
+    key,
+    searchQuery,
+  }: {
+    key: string;
+    searchQuery: string;
+  }): Promise<House> {
     let response: ResultSet;
     const query = {
       sql: `SELECT * FROM house WHERE ${key} = ?;`,
