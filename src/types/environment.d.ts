@@ -2,6 +2,10 @@ declare global {
   namespace NodeJS {
     interface ProcessEnv {
       NODE_ENV: 'development' | 'production' | 'test';
+      // API
+      HOUSIE_API_PORT: number;
+      HOUSIE_API_URL: string;
+      HOUSIE_WEB_APP_URL: string;
       // Housie
       HOUSIE_API_URL: string;
       HOUSIE_API_PORT: string;
@@ -26,9 +30,13 @@ declare global {
       TURSO_AUTH_TOKEN: string;
       // LLMs
       OPENAI_API_KEY: string;
+      // oAuth
+      DISCORD_CLIENT_ID: string;
+      DISCORD_CLIENT_SECRET: string;
+      GOOGLE_CLIENT_ID: string;
+      GOOGLE_CLIENT_SECRET: string;
     }
   }
 }
 
 export {};
-

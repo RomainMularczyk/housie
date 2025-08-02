@@ -3,9 +3,9 @@ import { RabbitMQ } from '../database/queue/RabbitMQConnection.js';
 import { QueueType } from '../types/Queue.d.js';
 import { JobStatusType, type ScrapingJob } from '../types/Job.d.js';
 import { ScrapingService } from '../services/ScrapingService.js';
-import { Redis } from '../database/kv/RedisConnection.js';
+import { RedisService } from '@/services/RedisService.js';
 
-process.env.NODE_ENV = 'production';
+const RABBITMQ_CONNECTION_STRING = process.env.RABBITMQ_URL || 'amqp://localhost:5672';
 
 class Worker {
   public queue: RabbitMQ | null = null;
@@ -18,6 +18,10 @@ class Worker {
    */
   async start(): Promise<void> {
     this.isRunning = true;
+    logger.info(
+      [LogDomain.WORKER],
+      `Attempting to start in environment ${process.env.NODE_ENV}`
+    );
     await this.run();
   }
 
@@ -29,12 +33,24 @@ class Worker {
   async run(): Promise<void> {
     this.queue = new RabbitMQ();
     // Create a channel for the worker (set isWorker to true)
-    await this.queue.createChannel(process.env.RABBITMQ_URL);
+    await this.queue.createChannel(RABBITMQ_CONNECTION_STRING);
     logger.info([LogDomain.WORKER], 'Worker started successfully');
-    await this.queue.consume(QueueType.HOUSE_SCRAPING, async (msg) => {
-      const job = JSON.parse(msg.content.toString());
-      await this.processJob(job);
-    });
+    await this.queue.consume(
+      QueueType.HOUSE_SCRAPING,
+      async (msg) => {
+        if (msg) {
+          try {
+            const job = JSON.parse(msg.content.toString());
+            await this.processJob(job);
+            this.queue?.ack(msg);
+          } catch (error) {
+            logger.error([LogDomain.WORKER], 'Error processing message', { error });
+            this.queue?.nack(msg, false, false);
+          }
+        }
+      },
+      { noAck: false }
+    );
   }
 
   /**
@@ -61,16 +77,40 @@ class Worker {
    */
   async processJob(job: ScrapingJob): Promise<void> {
     logger.info([LogDomain.WORKER], 'Processing job...', { job });
-    const house = await ScrapingService.scrapeHouse(job);
-    await ScrapingService.storeHouse(house);
+    let house;
+    try {
+      house = await ScrapingService.scrapeHouse(job);
+    } catch (err) {
+      logger.error([LogDomain.WORKER], 'Error when scraping house', { error: err });
+      const jobStatus = {
+        id: job.id,
+        status: JobStatusType.ERROR,
+        updatedAt: new Date(),
+      };
+      await RedisService.set(job.id, JSON.stringify(jobStatus));
+      return;
+    }
+    try {
+      const storedHouse = await ScrapingService.storeHouse(house);
+      logger.info([LogDomain.WORKER], 'House storred successfully', {
+        details: storedHouse,
+      });
+    } catch (err) {
+      logger.error([LogDomain.WORKER], 'Error when storing house', { error: err });
+      const jobStatus = {
+        id: job.id,
+        status: JobStatusType.ERROR,
+        updatedAt: new Date(),
+      };
+      await RedisService.set(job.id, JSON.stringify(jobStatus));
+      return;
+    }
     const jobStatus = {
       id: job.id,
       status: JobStatusType.SUCCESS,
       updatedAt: new Date(),
     };
-    const redis = new Redis();
-    await redis.connect(process.env.REDIS_URL);
-    await redis.set(job.id, JSON.stringify(jobStatus));
+    await RedisService.set(job.id, JSON.stringify(jobStatus));
     logger.info([LogDomain.WORKER], 'Job processed successfully', { jobStatus });
   }
 

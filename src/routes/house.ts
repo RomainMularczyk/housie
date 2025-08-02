@@ -3,14 +3,16 @@ import { CreateHouseSchema, UpdateHouseSchema } from '@/types/validators/House.j
 import { success } from '@/views/json/success.js';
 import { failure } from '@/views/json/failure.js';
 import HouseRepository from '@/repositories/HouseRepository.js';
+import { LogDomain, logger } from '@/utils/logger.js';
 
 const house = new Hono();
 
 house.get('/', async (_c) => {
   try {
-    const result = await HouseRepository.read();
+    const result = await HouseRepository.readAll();
     return success(200, result);
   } catch (err) {
+    logger.error([LogDomain.ROUTE], 'Error when reading houses', { error: err });
     return failure(err);
   }
 });
@@ -18,7 +20,7 @@ house.get('/', async (_c) => {
 house.get('/:id', async (c) => {
   try {
     const id = c.req.param('id');
-    const result = await HouseRepository.read(id);
+    const result = await HouseRepository.readOne(id);
     return success(200, result);
   } catch (err) {
     return failure(err);

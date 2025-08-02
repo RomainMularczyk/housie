@@ -17,11 +17,6 @@ const HousePostScraper = async (
 ): Promise<ScrapedHouse> => {
   try {
     await options.page.goto(options.url);
-    const [action] = await options.page.observe(
-      'If a dialog box or a pop up related to cookies prevents you ' +
-        'from seeing the actual page content, just accept cookies policy terms.'
-    );
-    await options.page.act(action);
     const data = await options.page.extract({
       instruction: options.prompt,
       schema: ParserHouseSchema,

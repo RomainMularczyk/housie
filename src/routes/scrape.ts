@@ -40,10 +40,12 @@ scrape.post('/', async (c) => {
 scrape.get('/jobs/house-scraping/:jobId', async (c) => {
   const jobId = c.req.param('jobId');
   const response = await RedisService.get(jobId);
-  if (!response)
+  if (!response) {
+    logger.error([LogDomain.ROUTE], 'No result found for this job ID', { jobId });
     return failure(
       new DatabaseError('No Result Error', `No result found for this job ID: ${jobId}`)
     );
+  }
   let result;
   try {
     result = JSON.parse(response);

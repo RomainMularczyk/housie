@@ -1,0 +1,3 @@
+Extract the following information from the page: - price of the house - square meters - number of rooms - name of the post - energy class (known as DPE, it's usually just one letter) - the city where the house is located - the postal code Also provide a very brief description summarizing additional information.
+
+

@@ -13,7 +13,7 @@ services:
       - TURSO_AUTH_TOKEN=${TURSO_AUTH_TOKEN}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - RABBITMQ_URL=${RABBITMQ_URL}
-    depends_on:
+    links:
       - redis
       - rabbit-mq
 
@@ -42,6 +42,8 @@ services:
       - "${REDIS_PORT}:6379"
     volumes:
       - redis_data:/data
+    links:
+      - rabbit-mq
 
   scraping-worker:
     build:
@@ -50,7 +52,8 @@ services:
       - RABBITMQ_URL=${RABBITMQ_URL}
       - TURSO_DATABASE_URL=${TURSO_DATABASE_URL}
       - REDIS_URL=${REDIS_URL}
-    depends_on:
+      - NODE_ENV=production
+    links:
       - rabbit-mq
       - redis
     deploy:

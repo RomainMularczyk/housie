@@ -20,6 +20,7 @@ class Redis {
    * is established.
    */
   public connect = async (host?: string): Promise<void> => {
+    logger.info([LogDomain.DATABASE], `Trying to connect to Redis on ${getRedisUrl()}`);
     this.client = createClient({
       url: host || getRedisUrl(),
     });

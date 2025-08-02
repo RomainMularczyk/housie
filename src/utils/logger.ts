@@ -9,6 +9,7 @@ enum LogDomain {
   ROUTE = 'ROUTE',
   SCRAPER = 'SCRAPER',
   DATABASE = 'DATABASE',
+  EMAIL = 'EMAIL',
   REPOSITORY = 'REPOSITORY',
   SERVICE = 'service',
   CLIENT = 'CLIENT',
@@ -151,4 +152,3 @@ export const logger = new Logger(logLevel, colorize);
 
 // Export for creating custom logger instances if needed
 export { Logger, LogDomain, LogLevel };
-

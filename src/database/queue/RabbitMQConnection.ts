@@ -15,8 +15,8 @@ class RabbitMQ {
    * Create a new RabbitMQ connection.
    *
    * @param {string | undefined} host - The connection string to RabbitMQ.
-   * @returns {Promise<void>} A promise that resolves when the connection with
-   * RabbitMQ is established.
+   * @returns {Promise<void>} A promise that resolves when the connection
+   * with RabbitMQ is established.
    */
   public async createChannel(host?: string): Promise<void> {
     this.connection = await amqp.connect(host || getRabbitMQUrl());
@@ -78,6 +78,34 @@ class RabbitMQ {
     if (!this.channel) throw new Error('Channel not initialized');
     this.channel.assertQueue(queue);
     return await this.channel.consume(queue, onMessage, options);
+  }
+
+  /**
+   * Acknowledge a message.
+   *
+   * @param {amqp.ConsumeMessage} message - The message to acknowledge.
+   * @returns {void}
+   */
+  public ack(message: amqp.ConsumeMessage): void {
+    if (!this.channel) throw new Error('Channel not initialized');
+    this.channel.ack(message);
+  }
+
+  /**
+   * Negatively acknowledge a message.
+   *
+   * @param {amqp.ConsumeMessage} message - The message to nack.
+   * @param {boolean} allUpTo - Whether to nack all messages up to this one.
+   * @param {boolean} requeue - Whether to requeue the message.
+   * @returns {void}
+   */
+  public nack(
+    message: amqp.ConsumeMessage,
+    allUpTo: boolean = false,
+    requeue: boolean = true
+  ): void {
+    if (!this.channel) throw new Error('Channel not initialized');
+    this.channel.nack(message, allUpTo, requeue);
   }
 
   public async close(): Promise<void> {
