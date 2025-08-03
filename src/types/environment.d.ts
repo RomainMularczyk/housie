@@ -35,6 +35,8 @@ declare global {
       DISCORD_CLIENT_SECRET: string;
       GOOGLE_CLIENT_ID: string;
       GOOGLE_CLIENT_SECRET: string;
+      // logs
+      LOG_LEVEL: number;
     }
   }
 }

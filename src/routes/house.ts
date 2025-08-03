@@ -4,12 +4,25 @@ import { success } from '@/views/json/success.js';
 import { failure } from '@/views/json/failure.js';
 import HouseRepository from '@/repositories/HouseRepository.js';
 import { LogDomain, logger } from '@/utils/logger.js';
+import { requireAuthenticationMiddleware } from '@/middlewares/authentication.js';
 
 const house = new Hono();
 
-house.get('/', async (_c) => {
+house.use(requireAuthenticationMiddleware);
+
+// ------------------------------------------
+// -------------- GENERIC CRUD --------------
+// ------------------------------------------
+
+house.get('/projects/:projectId/houses', async (c) => {
   try {
-    const result = await HouseRepository.readAll();
+    logger.info([LogDomain.ROUTE], 'Reading all houses');
+    const projectId = c.req.param('projectId');
+    const user = c.get('user');
+    const result = await HouseRepository.readAll({
+      userId: user.id,
+      projectId: projectId,
+    });
     return success(200, result);
   } catch (err) {
     logger.error([LogDomain.ROUTE], 'Error when reading houses', { error: err });
@@ -17,54 +30,91 @@ house.get('/', async (_c) => {
   }
 });
 
-house.get('/:id', async (c) => {
+house.get('/projects/:projectId/houses/:id', async (c) => {
   try {
+    logger.info([LogDomain.ROUTE], 'Reading house');
     const id = c.req.param('id');
-    const result = await HouseRepository.readOne(id);
+    const projectId = c.req.param('projectId');
+    const user = c.get('user');
+    const result = await HouseRepository.readOne({
+      projectId: projectId,
+      userId: user.id,
+      houseId: id,
+    });
     return success(200, result);
   } catch (err) {
     return failure(err);
   }
 });
 
-house.post('/', async (c) => {
+house.post('/projects/:projectId/houses', async (c) => {
   try {
+    logger.info([LogDomain.ROUTE], 'Creating house');
     const body = await c.req.json();
-    const house = CreateHouseSchema.parse(body);
-    const result = await HouseRepository.create(house);
+    const user = c.get('user');
+    const projectId = c.req.param('projectId');
+    const house = CreateHouseSchema.parse({ ...body, projectId: projectId });
+    const result = await HouseRepository.create(house, { userId: user.id });
     return success(201, result);
   } catch (err) {
     return failure(err);
   }
 });
 
-house.put('/:id', async (c) => {
+house.put('/projects/:projectId/houses/:id', async (c) => {
   try {
+    logger.info([LogDomain.ROUTE], 'Updating house');
     const id = c.req.param('id');
+    const user = c.get('user');
+    const projectId = c.req.param('projectId');
     const body = await c.req.json();
     const changes = UpdateHouseSchema.parse(body);
-    const result = await HouseRepository.update(id, changes);
+    const result = await HouseRepository.update({
+      projectId: projectId,
+      userId: user.id,
+      houseId: id,
+      changes: changes,
+    });
     return success(200, result);
   } catch (err) {
     return failure(err);
   }
 });
 
-house.delete('/:id', async (c) => {
+house.delete('/projects/:projectId/houses/:id', async (c) => {
   try {
+    logger.info([LogDomain.ROUTE], 'Deleting house');
     const id = c.req.param('id');
-    const result = await HouseRepository.delete(id);
+    const projectId = c.req.param('projectId');
+    const user = c.get('user');
+    const result = await HouseRepository.delete({
+      projectId: projectId,
+      userId: user.id,
+      houseId: id,
+    });
     return success(200, result);
   } catch (err) {
     return failure(err);
   }
 });
 
-house.post('/find', async (c) => {
+// ------------------------------------
+// -------------- CUSTOM --------------
+// ------------------------------------
+
+house.post('projects/:projectId/houses/find', async (c) => {
   try {
+    logger.info([LogDomain.ROUTE], 'Finding house');
     const key = c.req.query('key')!;
     const searchQuery = c.req.query('query')!;
-    const result = await HouseRepository.findOneBy({ key, searchQuery });
+    const projectId = c.req.param('projectId');
+    const user = c.get('user');
+    const result = await HouseRepository.findOneBy({
+      key: key,
+      searchQuery: searchQuery,
+      projectId: projectId,
+      userId: user.id,
+    });
     return success(200, result);
   } catch (err) {
     return failure(err);

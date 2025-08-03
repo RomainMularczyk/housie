@@ -30,6 +30,13 @@ const CreateHouseSchema = z.object({
     .boolean()
     .default(true)
     .transform((data) => (data === true ? 1 : 0)),
+  createdAt: z
+    .date({ message: 'House\'s creation date must be a valid date.' })
+    .default(new Date()),
+  updatedAt: z
+    .date({ message: 'House\'s updated date must be a valid date.' })
+    .default(new Date()),
+  projectId: z.string(),
 });
 
 const SelectHouseSchema = z.object({
@@ -47,6 +54,13 @@ const SelectHouseSchema = z.object({
   isArchived: z.number().transform((data) => (data === 0 ? false : true)),
   isHousiaPicked: z.number().transform((data) => (data === 0 ? false : true)),
   isUserPicked: z.number().transform((data) => (data === 0 ? false : true)),
+  createdAt: z
+    .number({ message: 'House\'s creation date must be a valid date.' })
+    .transform((date) => new Date(date)),
+  updatedAt: z
+    .number({ message: 'House\'s updated date must be a valid date.' })
+    .transform((date) => new Date(date)),
+  projectId: z.string(),
 });
 
 const UpdateHouseSchema = z
@@ -64,6 +78,9 @@ const UpdateHouseSchema = z
     isArchived: z.boolean().transform((data) => (data === true ? 1 : 0)),
     isHousiaPicked: z.boolean().transform((data) => (data === true ? 1 : 0)),
     isUserPicked: z.boolean().transform((data) => (data === true ? 1 : 0)),
+    createdAt: z.date(),
+    updatedAt: z.date().transform((date) => new Date(date)),
+    projectId: z.string(),
   })
   .partial();
 

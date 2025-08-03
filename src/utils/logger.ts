@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 enum LogLevel {
   ERROR = 0,
   WARN = 1,
@@ -142,13 +145,12 @@ class Logger {
   }
 }
 
-// Create default logger instance
-const logLevel = process.env.LOG_LEVEL
-  ? parseInt(process.env.LOG_LEVEL)
-  : LogLevel.INFO;
+// Defaults
+const logLevel = process.env.LOG_LEVEL ? process.env.LOG_LEVEL : LogLevel.INFO;
 const colorize = process.env.NO_COLOR !== '1';
 
 export const logger = new Logger(logLevel, colorize);
 
-// Export for creating custom logger instances if needed
+logger.info([LogDomain.SYSTEM], 'Logger initialized', { logLevel });
+
 export { Logger, LogDomain, LogLevel };

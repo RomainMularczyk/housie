@@ -30,6 +30,7 @@ type HouseDatabase = {
   isArchived: 0 | 1;
   isHousiaPicked: 0 | 1;
   isUserPicked: 0 | 1;
+  projectId: string;
 };
 
 type ScrapedHouse = Omit<

@@ -24,8 +24,8 @@ const routes = (
     });
   });
 
-  app.route('api/v1/houses', house);
-  app.route('api/v1/prompts', prompt);
+  app.route('api/v1/', house);
+  app.route('api/v1/', prompt);
   app.route('api/v1/projects', project);
   app.route('api/v1/scrape', scrape);
 
