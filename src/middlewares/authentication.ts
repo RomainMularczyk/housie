@@ -1,8 +1,10 @@
 import { auth } from '@/utils/auth/auth.js';
+import { failure } from '@/views/json/failure.js';
+import { AuthenticationError } from '@/errors/AuthenticationError.js';
 import { Context, Next } from 'hono';
 
 /**
- * Authentication middleware
+ * Provides the current user and session to the context.
  *
  * @param {Context} c - The context of the request.
  * @param {Next} next - The next middleware function.
@@ -24,4 +26,30 @@ const authenticationMiddleware = async (c: Context, next: Next): Promise<void> =
   return next();
 };
 
-export default authenticationMiddleware;
+/**
+ * Verifies that the user is authenticated before allowing access to the route.
+ *
+ * @param {Context} c - The context of the request.
+ * @param {Next} next - The next middleware function.
+ * @returns {Promise<void | Response>} A promise that resolves when the
+ * middleware is complete.
+ */
+const requireAuthenticationMiddleware = async (
+  c: Context,
+  next: Next
+): Promise<void | Response> => {
+  const user = c.get('user');
+
+  if (!user) {
+    return failure(
+      new AuthenticationError(
+        'User Not Authenticated Error',
+        'The user is not authenticated.'
+      )
+    );
+  }
+
+  return next();
+};
+
+export { authenticationMiddleware, requireAuthenticationMiddleware };

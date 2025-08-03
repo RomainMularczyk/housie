@@ -6,7 +6,7 @@ import routes from '@/routes/index.js';
 import { TelegramClient } from '@/clients/telegram/Telegram.js';
 import { LogDomain, logger } from '@/utils/logger.js';
 import { auth as authConfig } from './utils/auth/auth.js';
-import authenticationMiddleware from './middlewares/authentication.js';
+import { authenticationMiddleware } from './middlewares/authentication.js';
 
 const app = new Hono<{
   Variables: {
@@ -27,6 +27,8 @@ app.use(
     credentials: true,
   })
 );
+// The middleware simply adds the current session to the context,
+// it does not check if the user is authenticated or not
 app.use('/*', authenticationMiddleware);
 app.use(honoLogger());
 logger.info([LogDomain.SYSTEM], 'CORS middleware configured', {

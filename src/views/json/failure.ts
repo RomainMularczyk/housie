@@ -1,3 +1,4 @@
+import { AuthenticationError } from '@/errors/AuthenticationError.js';
 import { DatabaseError } from '@/errors/DatabaseError.js';
 import { HTTPParsingError } from '@/errors/HTTPParsingError.js';
 import { JSONParsingError } from '@/errors/JSONParsingError.js';
@@ -20,7 +21,7 @@ const failure = (err: unknown): Response => {
           error: err,
         },
       }),
-      { headers: { 'content-type': 'application/json' }, status: err.status },
+      { headers: { 'content-type': 'application/json' }, status: err.status }
     );
   }
   if (err instanceof JSONParsingError) {
@@ -29,7 +30,7 @@ const failure = (err: unknown): Response => {
         status: 'failure',
         message: err.message,
       }),
-      { headers: { 'content-type': 'application/json' }, status: err.status },
+      { headers: { 'content-type': 'application/json' }, status: err.status }
     );
   }
   if (err instanceof ZodError) {
@@ -42,10 +43,12 @@ const failure = (err: unknown): Response => {
             (acc: { [key: string]: ZodIssue }, issue: ZodIssue) => {
               acc[issue.path[0]] = issue;
               return acc;
-            }, {}),
+            },
+            {}
+          ),
         },
       }),
-      { headers: { 'content-type': 'application/json' }, status: 422 },
+      { headers: { 'content-type': 'application/json' }, status: 422 }
     );
   }
 
@@ -58,9 +61,24 @@ const failure = (err: unknown): Response => {
         message: 'A constraint error occurred with the database.',
         details: {
           issues: err.message,
-        }
+        },
       }),
       { headers: { 'content-type': 'application/json' }, status: 409 }
+    );
+  }
+
+  // -------- AUTHENTICATION ERRORS --------
+
+  if (err instanceof AuthenticationError) {
+    return new Response(
+      JSON.stringify({
+        status: 'failure',
+        message: 'An authentication error occurred.',
+        details: {
+          error: err,
+        },
+      }),
+      { headers: { 'content-type': 'application/json' }, status: 401 }
     );
   }
 
@@ -74,7 +92,7 @@ const failure = (err: unknown): Response => {
         error: err,
       },
     }),
-    { headers: { 'content-type': 'application/json' }, status: 500 },
+    { headers: { 'content-type': 'application/json' }, status: 500 }
   );
 };
 
